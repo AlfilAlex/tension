@@ -24,6 +24,9 @@ def epitope_tension(structure_id, filename):
     # Como este programa aún no determina el nombre, hace el intento con
     # "A" y "C". Sin embargo, otro nombre no sería reconocido.
 
+    # A demás debe avisar si se está utilizando una cadena muy extensa
+    # o al menos avisar de su tamaño.
+
     # Esto esta mal, es  decir, no es la forma correcta de usar el 
     # try y el except, pero es la unica forma que se me ocurre por
     # ahora.
@@ -34,9 +37,20 @@ def epitope_tension(structure_id, filename):
     
     
     else:
+        chain_list = model_1.get_list()
+        max_len = 1
+        for chainItem in chain_list:
+            # Probablemente aquí deba agreagar alguna función 
+            # "is_solvent" o algo así, que verifique que la
+            #  cadena no está contando el solvente. O algo
+            # que lo elimine.
+            chain_length = len(chainItem)
+            if chain_length > max_len:
+                chain = model_1[chainItem]
+                max_len= chain_length
     # Aquí deberiamos análizar todas las cadenas que hay en model 1 
     # Y entonces escoger la cadena que tenga de 9 a 12 aminoácidos.
-        pass
+        
 
 
     # Una vez que se cuenta con el chain correcto, se pueden seleccionar
@@ -58,6 +72,7 @@ def epitope_tension(structure_id, filename):
 # El vector que va de un extremo del epitope al otro y el plano formado por la 
 # superficie relativa de la HLA.
 def angule(chain_epitope, chain_hla):
+    # Cómo rayos encontramos una superficie? 
     pass
 
 
