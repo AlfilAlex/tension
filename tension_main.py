@@ -1,4 +1,5 @@
 from Bio.PDB.PDBParser import PDBParser
+from Bio.PDB import is_aa
 
 def tension_betarelativa(distance, chain_length, AC_MD = 3.5):
     """ This function calculate the relative tension of a AA chain given that 
@@ -24,12 +25,17 @@ def epitope_tension(structure_id, filename):
     # incluye el epitope. Sin embargo es necesario determinar el nombre.
     # Como este programa aún no determina el nombre, hace el intento con
     # "A" y "C". Sin embargo, otro nombre no sería reconocido.
-
-    # A demás debe avisar si se está utilizando una cadena muy extensa
-    # o al menos avisar de su tamaño.
         chain_list = model_1.get_list()  # <--- Esto es una lista de objetos chain "<Chain id=C>"
         chainItem = model_1[chain_list[0].get_id()]
         chain = solvent_delete(chainItem)
+
+    # A demás debe avisar si se está utilizando una cadena muy extensa
+    # o al menos avisar de su tamaño.
+        if len(chain_list) >= 15:
+            print('CUIDADO, la cadena es muy extensa')
+
+
+
 
 
 
@@ -39,21 +45,9 @@ def epitope_tension(structure_id, filename):
         chain_list = model_1.get_list()
         min_len = 100_000_000
         for chainItem in chain_list:
-            # Probablemente aquí deba agreagar alguna función 
-            # "is_solvent" o algo así, que verifique que la
-            #  cadena no está contando el solvente. O algo
-            # que lo elimine.
-            #print('_____________')
-            #print(chainItem)
-            #print(type(chainItem))
-            #print('_____________')
+
             SF_chainItem = solvent_delete(chainItem)
             chain_length = len(SF_chainItem)
-
-            #print('##############')
-            #print(SF_chainItem)
-            #print(type(SF_chainItem))
-            #print('##############')
 
             if chain_length < min_len:
                 chain = SF_chainItem
@@ -74,7 +68,7 @@ def epitope_tension(structure_id, filename):
 
     tension = tension_betarelativa(d_ext, chain_length)
 
-    return tension, d_ext
+    return round(tension, 5), round(d_ext, 3)
 
 # Estaría padre generar una función que pueda calcular el angulo que hay entre
 # El vector que va de un extremo del epitope al otro y el plano formado por la 
@@ -85,7 +79,9 @@ def angule(chain_epitope, chain_hla):
 
 
 def solvent_delete(pdbChain):
-    SF_chainItem = [residue for residue in pdbChain if "W" not in residue.get_id()]
+    SF_chainItem = [residue for residue in pdbChain if is_aa(residue)]
+    #SF_chainItem = [residue for residue in pdbChain if "W" not in residue.get_id()]
+
     return SF_chainItem
     
 
@@ -100,14 +96,8 @@ if __name__ == "__main__":
     filename_1 = "6uon.pdb"
     tension_1, d_ext_1 = epitope_tension(structure_id, filename_1)
 
-   # filename_2 = "5c0g.pdb"
-   # tension_2, d_ext_2 = epitope_tension(structure_id, filename_2)
-
     print(f'La distancia entre los carbonos alfa del primer y último AA es: {d_ext_1} Amstrongs')
-   # print(f'La distancia entre los carbonos alfa del primer y último AA es: {d_ext_2} Amstrongs')
-
     print(f'La tensión beta relativa del epitope en la HLA es de {tension_1*100} %')
-   # print(f'La tensión beta relativa del epitope en la HLA es de {tension_2*100} %')
 
 
 
