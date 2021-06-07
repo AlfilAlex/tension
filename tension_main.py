@@ -19,6 +19,7 @@ def epitope_tension(structure_id, filename):
 
 
     if len(model_1) == 1:
+
     # Si model solo tiene una cadena, entonces se considera que solo
     # incluye el epitope. Sin embargo es necesario determinar el nombre.
     # Como este programa aún no determina el nombre, hace el intento con
@@ -26,14 +27,10 @@ def epitope_tension(structure_id, filename):
 
     # A demás debe avisar si se está utilizando una cadena muy extensa
     # o al menos avisar de su tamaño.
+        chain_list = model_1.get_list()  # <--- Esto es una lista de objetos chain "<Chain id=C>"
+        chain = model_1[chain_list[0].get_id()]
 
-    # Esto esta mal, es  decir, no es la forma correcta de usar el 
-    # try y el except, pero es la unica forma que se me ocurre por
-    # ahora.
-        try:
-            chain = model_1['A']
-        except:
-            chain = model_1['C']
+
     
     
     else:
