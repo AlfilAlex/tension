@@ -46,33 +46,23 @@ def epitope_tension(structure_id, filename):
                 max_len = chain_length
     
 
-    # Una vez que se cuenta con el chain correcto, se pueden seleccionar
     # Los resiudos iniciales y finales (residue_0, residue_f)
     residue_0 = chain[0]
     chain_length = len(chain)
     residue_f = chain[chain_length - 1] # Ahora trabajamos con una lista que tiene indice 0.
-
-
-    #######################################
+    
     matriz_angules = angule_change(chain)
-
-
-
-    #######################################
-
+    
     # Por la documentación se sabe que esta operación entre elementos de
     # la clase residuos es posible.
     d_ext = residue_0['CA'] - residue_f['CA']
     tension = tension_betarelativa(d_ext, chain_length)
 
-    return round(tension, 5), round(d_ext, 3)
-
-
+    return round(tension, 5), round(d_ext, 3), matriz_angules
 
 
 def solvent_delete(pdbChain):
-    SF_chainItem = [residue for residue in pdbChain if is_aa(residue)]
-    #SF_chainItem = [residue for residue in pdbChain if "W" not in residue.get_id()]
+    SF_chainItem = [residue for residue in pdbChain if is_aa(residue)] # [residue for residue in pdbChain if "W" not in residue.get_id()]
     return SF_chainItem
 
 # Estaría padre generar una función que pueda calcular el angulo que hay entre
@@ -84,11 +74,11 @@ def angule(chain_epitope, chain_hla):
 
 # También una forma de medir la distribución de los angulos en el epitope
 def angule_change(chain):
-    """ Esta función toma como entrada el epitope y calcula primeramente el vector
-        que va de un extremo a otro. Posteriormente para acada uno de los carbonos 
-        alpha posteriores, calcula los angulos que van desde el primer carbon alpha
-        del epitope hasta el siguiente carbono alpha hasta llegar al último, cuyo 
-        águlo debe ser 0.
+    """ This function takes the epitope as input and first calculates the vector
+         that goes from one extreme to another. Later for each of the carbons
+         subsequent alphas, calculates the angles from the first alpha carbon
+         from the epitope to the next alpha carbon until the last one, whose
+         angle must be 0.
     """
     # Chain es una lista de residuos y ya no un objeto chain de BIO.PDB
     coord_CA0 = chain[0]['CA'].get_coord()
@@ -116,10 +106,11 @@ def angule_change(chain):
 if __name__ == "__main__":
     structure_id = "ejemplo_1"
     filename_1 = "lmf.pdb"
-    tension_1, d_ext_1 = epitope_tension(structure_id, filename_1)
+    tension_1, d_ext_1, angule = epitope_tension(structure_id, filename_1)
 
-    print(f'La distancia entre los carbonos alfa del primer y último AA es: {d_ext_1} Amstrongs')
-    print(f'La tensión beta relativa del epitope en la HLA es de {tension_1*100} %')
+    print(f'The distance between the alpha carbons of the first and last AA is: {d_ext_1} A')
+    print(f'The relative beta stress of the epitope in HALLA is {tension_1*100} %')
+    print(f'The distribution of the angles is: {angule} ')
 
 
 
