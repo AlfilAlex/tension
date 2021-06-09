@@ -1,5 +1,6 @@
 from Bio.PDB.PDBParser import PDBParser
 from Bio.PDB import is_aa
+import numpy as np
 
 def tension_betarelativa(distance, chain_length, AC_MD = 3.5):
     """ This function calculate the relative tension of a AA chain given that 
@@ -20,30 +21,18 @@ def epitope_tension(structure_id, filename):
 
 
     if len(model_1) == 1:
-
-    # Si model solo tiene una cadena, entonces se considera que solo
-    # incluye el epitope. Sin embargo es necesario determinar el nombre.
-    # Como este programa aún no determina el nombre, hace el intento con
-    # "A" y "C". Sin embargo, otro nombre no sería reconocido.
+        # Es necesario determinar el nombre.
         chain_list = model_1.get_list()  # <--- Esto es una lista de objetos chain "<Chain id=C>"
         chainItem = model_1[chain_list[0].get_id()]
         chain = solvent_delete(chainItem)
 
-    # A demás debe avisar si se está utilizando una cadena muy extensa
-    # o al menos avisar de su tamaño.
-        if len(chain_list) >= 15:
+        if len(chain_list) >= 16:
             print('CUIDADO, la cadena es muy extensa')
-
-
-
-
-
-
-    
-    
+   
     else:
         chain_list = model_1.get_list()
         min_len = 100_000_000
+        max_len = 1
         for chainItem in chain_list:
 
             SF_chainItem = solvent_delete(chainItem)
@@ -51,40 +40,73 @@ def epitope_tension(structure_id, filename):
 
             if chain_length < min_len:
                 chain = SF_chainItem
-                min_len= chain_length
+                min_len = chain_length
+            if chain_length > max_len:
+                chain_max = SF_chainItem
+                max_len = chain_length
     
 
     # Una vez que se cuenta con el chain correcto, se pueden seleccionar
     # Los resiudos iniciales y finales (residue_0, residue_f)
-   # print(chain.get_list())
     residue_0 = chain[0]
     chain_length = len(chain)
-    residue_f = chain[chain_length - 1] # Ahora trabajamos con una ista que tiene indice 0.
+    residue_f = chain[chain_length - 1] # Ahora trabajamos con una lista que tiene indice 0.
 
+
+    #######################################
+    matriz_angules = angule_change(chain)
+
+
+
+    #######################################
 
     # Por la documentación se sabe que esta operación entre elementos de
     # la clase residuos es posible.
     d_ext = residue_0['CA'] - residue_f['CA']
-
     tension = tension_betarelativa(d_ext, chain_length)
 
     return round(tension, 5), round(d_ext, 3)
+
+
+
+
+def solvent_delete(pdbChain):
+    SF_chainItem = [residue for residue in pdbChain if is_aa(residue)]
+    #SF_chainItem = [residue for residue in pdbChain if "W" not in residue.get_id()]
+    return SF_chainItem
 
 # Estaría padre generar una función que pueda calcular el angulo que hay entre
 # El vector que va de un extremo del epitope al otro y el plano formado por la 
 # superficie relativa de la HLA.
 def angule(chain_epitope, chain_hla):
     # Cómo rayos encontramos una superficie? 
-    pass
+    pass  
 
+# También una forma de medir la distribución de los angulos en el epitope
+def angule_change(chain):
+    """ Esta función toma como entrada el epitope y calcula primeramente el vector
+        que va de un extremo a otro. Posteriormente para acada uno de los carbonos 
+        alpha posteriores, calcula los angulos que van desde el primer carbon alpha
+        del epitope hasta el siguiente carbono alpha hasta llegar al último, cuyo 
+        águlo debe ser 0.
+    """
+    # Chain es una lista de residuos y ya no un objeto chain de BIO.PDB
+    coord_CA0 = chain[0]['CA'].get_coord()
+    coord_CAf = chain[-1]['CA'].get_coord()
+    base_vector = coord_CAf - coord_CA0
+    print('el tipo de objeto es: ' + str(type(base_vector)))
 
-def solvent_delete(pdbChain):
-    SF_chainItem = [residue for residue in pdbChain if is_aa(residue)]
-    #SF_chainItem = [residue for residue in pdbChain if "W" not in residue.get_id()]
+    angule_matrix = [0] # De el primer AA
+    for i in range(1, len(chain)):
+        base_i = chain[i]['CA'].get_coord() - coord_CA0 
+        dot_product = np.dot(base_vector, base_i)
+        module_mult = np.linalg.norm(base_i)*np.linalg.norm(base_vector)
 
-    return SF_chainItem
-    
+        angule = np.arccos(dot_product/module_mult)
+        angule_matrix.append(np.degrees(angule))
 
+    print(angule_matrix)
+    return angule_matrix
 
 
 # Esto es un ejemplo de cómo usar las funciones. Básicamente el  
@@ -93,7 +115,7 @@ def solvent_delete(pdbChain):
 
 if __name__ == "__main__":
     structure_id = "ejemplo_1"
-    filename_1 = "6uon.pdb"
+    filename_1 = "lmf.pdb"
     tension_1, d_ext_1 = epitope_tension(structure_id, filename_1)
 
     print(f'La distancia entre los carbonos alfa del primer y último AA es: {d_ext_1} Amstrongs')
